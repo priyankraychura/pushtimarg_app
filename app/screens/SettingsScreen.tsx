@@ -186,7 +186,7 @@ const SettingsScreen = ({
                  </View>
                  <View>
                    <Text style={[styles.cardTitle, { color: theme.text, fontSize: 18 }]}>Pushtimarg</Text>
-                   <Text style={[styles.cardSubtitle, { color: theme.subText }]}>v1.0.0 (Beta)</Text>
+                   <Text style={[styles.cardSubtitle, { color: theme.subText }]}>v1.0.1 (Beta)</Text>
                  </View>
               </View>
               <Text style={{ color: theme.subText, lineHeight: 22, fontSize: 15 }}>

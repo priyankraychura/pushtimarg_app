@@ -16,6 +16,7 @@ import contentReducer from './slices/contentSlice';
 import { counterSlice } from './slices/counterSlice';
 import settingsReducer from './slices/settingsSlice';
 import userReducer from './slices/userSlice';
+import vartaReducer from './slices/vartaSlice';
 
 // 1. Create the Root Reducer
 // We need to combine them first because persistReducer expects one single reducer function.
@@ -24,6 +25,7 @@ const rootReducer = combineReducers({
   user: userReducer,
   content: contentReducer,
   counter: counterSlice.reducer,
+  varta: vartaReducer,
 });
 
 // 2. Configure Persistence

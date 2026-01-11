@@ -1,31 +1,45 @@
+import ErrorView from '@/components/ErrorView';
 import Header from '@/components/Header';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { clearCurrentPrasang, fetchPrasangContent } from '@/redux/slices/vartaSlice';
 import { styles } from '@/styles';
 import { useNavigation } from '@react-navigation/native';
 import { MoreHorizontal, Type } from 'lucide-react-native';
-import React, { useRef, useState } from 'react';
-import { Animated, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Text, TouchableOpacity, View } from 'react-native';
 
 interface VartaReadScreenProps {
   theme: any;
-  prasangDetail: any;
-  getBaseFontSize: any;
+  prasangDetail: any; // <--- Changed: Receive data directly, not via route
+  getBaseFontSize: () => number;
 }
 
 const VartaReadScreen = ({
       theme, 
-      prasangDetail,
+      prasangDetail, // <--- Use this prop directly
       getBaseFontSize,
     }: VartaReadScreenProps) => {
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   
-  // Destructure the data passed from the Detail screen
-  const { prasang, vaishnavName, prasangIndex, totalPrasangs } = prasangDetail;
+  // 1. Destructure Data directly from the prop
+  // Note: We don't use route.params here because the Wrapper in App.tsx already passed it
+  const { vaishnavName, prasangIndex, file } = prasangDetail;
+
+  // 2. Get Content from Redux
+  const { currentPrasang, prasangStatus, prasangError } = useAppSelector((state) => state.varta);
   
   const [fontSize, setFontSize] = useState(getBaseFontSize());
   const [showFontControl, setShowFontControl] = useState(false);
   
-  // Animation for Header
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  // 3. Cleanup on Unmount
+  useEffect(() => {
+    return () => {
+      dispatch(clearCurrentPrasang());
+    };
+  }, [dispatch]);
 
   // Font Handlers
   const increaseFont = () => {
@@ -34,6 +48,44 @@ const VartaReadScreen = ({
   const decreaseFont = () => {
     if (fontSize > 12) setFontSize((prev: number) => prev - 2);
   };
+
+  // --- RENDER LOADING ---
+  if (prasangStatus === 'loading' || prasangStatus === 'idle') {
+    return (
+        <View style={[styles.screen, { backgroundColor: theme.bg }]}>
+            <Header
+                title={`Prasang ${prasangIndex + 1}`}
+                subtitle={vaishnavName}
+                onBack={() => navigation.goBack()}
+                theme={theme}
+            />
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color={theme.devotionalPrimary} />
+            </View>
+        </View>
+    );
+  }
+
+  // --- RENDER ERROR ---
+  if (prasangStatus === 'failed') {
+    return (
+        <View style={[styles.screen, { backgroundColor: theme.bg }]}>
+            <Header
+                title={`Prasang ${prasangIndex + 1}`}
+                subtitle={vaishnavName}
+                onBack={() => navigation.goBack()}
+                theme={theme}
+            />
+            <ErrorView 
+                theme={theme} 
+                message={prasangError || "Unable to load story"} 
+                onRetry={() => {
+                    if (file) dispatch(fetchPrasangContent(file));
+                }} 
+            />
+        </View>
+    );
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.bg }]}>
@@ -63,7 +115,7 @@ const VartaReadScreen = ({
           }
         />
 
-        {/* 2. Custom Font Popover */}
+        {/* Custom Font Popover */}
         {showFontControl && (
           <View
             style={[
@@ -76,7 +128,6 @@ const VartaReadScreen = ({
             ]}
           >
             <View style={styles.fontControlRow}>
-              {/* Decrease Button */}
               <TouchableOpacity 
                 style={[styles.controlBtn, { backgroundColor: theme.inputBg }]} 
                 onPress={decreaseFont}
@@ -84,13 +135,11 @@ const VartaReadScreen = ({
                  <Type size={14} color={theme.text} />
               </TouchableOpacity>
 
-              {/* Display Size */}
               <View style={styles.sizeDisplay}>
                  <Text style={[styles.sizeText, { color: theme.text }]}>{fontSize}</Text>
                  <Text style={[styles.pxText, { color: theme.subText }]}>px</Text>
               </View>
 
-              {/* Increase Button */}
               <TouchableOpacity 
                 style={[styles.controlBtn, { backgroundColor: theme.inputBg }]} 
                 onPress={increaseFont}
@@ -101,8 +150,9 @@ const VartaReadScreen = ({
           </View>
         )}
       </View>
+
       <Animated.ScrollView 
-        contentContainerStyle={[styles.scrollContent]}
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: 20, paddingBottom: 100 }]}
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -110,7 +160,11 @@ const VartaReadScreen = ({
         )}
         scrollEventThrottle={16}
       >
-        <Text style={[styles.title, { color: theme.text }]}>{prasang.title}</Text>
+        {/* Render Content from Redux State */}
+        <Text style={[styles.title, { color: theme.text, marginTop: 10 }]}>
+            {currentPrasang?.title || prasangDetail.title}
+        </Text>
+        
         <View style={[styles.vartaDivider, { backgroundColor: theme.devotionalPrimary }]} />
         
         <Text style={[
@@ -118,20 +172,19 @@ const VartaReadScreen = ({
           { 
             color: theme.text, 
             fontSize: fontSize,
-            lineHeight: fontSize * 1.6 
+            lineHeight: fontSize * 1.6,
+            textAlign: 'justify'
           }
         ]}>
-          {prasang.content}
+          {currentPrasang?.content}
         </Text>
 
         <View style={styles.footer}>
-          <Text style={[styles.endMark, { color: theme.devotionalPrimary }]}>|| Jai Shri Krishna ||</Text>
+          <Text style={[styles.endMark, { color: theme.devotionalPrimary, textAlign: 'center', marginTop: 30, opacity: 0.8 }]}>
+            || Jai Shri Krishna ||
+          </Text>
         </View>
 
-        {/* Navigation Footer (Next/Prev could go here) */}
-        <View style={styles.navFooter}>
-           {/* Placeholders for prev/next logic if needed */}
-        </View>
       </Animated.ScrollView>
     </View>
   );

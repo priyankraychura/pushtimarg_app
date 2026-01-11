@@ -6,6 +6,10 @@ import {
 
 
 
+
+
+
+
     Animated,
     AppState,
     StyleSheet,
@@ -101,7 +105,7 @@ const AartiDetailScreen = ({
         setShowFontMenu(false);
     };
 
-    const videoId = aarti.videoId || 'MIu-2qpyZko';
+    const videoId = aarti?.videoId;
 
     if (isLoading) {
         return (
@@ -218,7 +222,7 @@ const AartiDetailScreen = ({
             </Animated.ScrollView>
 
             {/* --- RIGHT ALIGNED GLASS PLAYER WITH LOADER --- */}
-            {playerEnabled && (
+            {playerEnabled && videoId &&(
                 <View style={localStyles.playerWrapper}>
                     <GlassView
                         theme={theme}
