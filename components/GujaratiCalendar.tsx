@@ -1,12 +1,12 @@
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
-    DayData,
-    WEEKDAYS,
-    calculateTithi,
-    generateCalendarGrid,
-    getUpcomingAgiyaras
+  DayData,
+  WEEKDAYS,
+  calculateTithi,
+  generateCalendarGrid,
+  getUpcomingAgiyaras
 } from '../utils/calendarLogic';
 import GlassView from './GlassView';
 import Loader from './Loader';
@@ -54,7 +54,7 @@ export const GujaratiCalendar = ({theme}:GujaratiCalendarProps) => {
     }, 50);
   };
 
-  const renderDay = ({ item }: { item: DayData }) => {
+  const renderDay = React.useCallback(({ item }: { item: DayData }) => {
     const isSelected = item.date.toDateString() === selectedDate.toDateString();
     
     // Dynamic Styles based on Tithi & Theme
@@ -113,7 +113,7 @@ export const GujaratiCalendar = ({theme}:GujaratiCalendarProps) => {
         </View>
       </TouchableOpacity>
     );
-  };
+  }, [selectedDate, theme]);
 
   // Helper to get special day label
   const getSpecialDayLabel = (tithi: any) => {
